@@ -1,0 +1,140 @@
+diff -r 7a5e81a25faa src/server/game/Entities/Player/Player.cpp
+--- a/src/server/game/Entities/Player/Player.cpp        Thu Dec 02 03:00:41 2010 +0000
++++ b/src/server/game/Entities/Player/Player.cpp        Thu Dec 02 03:00:50 2010 +0000
+@@ -7050,6 +7050,48 @@
+         SendInitWorldStates(newZone, newArea);              // only if really enters to new zone, not just area change, works strange...
+     }
+ 
++    // Prevent players from accessing GM Island
++    if (sWorld->getBoolConfig(CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE) == true)
++    {
++        if (newZone == 876 && GetSession()->GetSecurity() == SEC_PLAYER)
++        {
++            QueryResult result = CharacterDatabase.PQuery("SELECT * FROM `gmisland_teleport` WHERE 1");
++
++            Field* fields = result->Fetch();
++
++            if (result)
++            {
++                uint32   map           = fields[0].GetUInt32();
++                double   x             = fields[1].GetDouble();
++                double   y             = fields[2].GetDouble();
++                double   z             = fields[3].GetDouble();
++                double   orientation   = fields[4].GetDouble();
++
++                if (map == 876)
++                {
++                    sLog->outError("Player (GUID: %u) tried to access GM Island.", GetGUIDLow());
++                    sLog->outError("Error: Cannot set tele to GM Island (map: %u). Sending possible hacker to default location. (Jail Box)",map);
++                    TeleportTo(13,1.118799,0.477914,-144.708650,3.133046); // Tele to Jail Box
++                    CastSpell(this, 9454, true); // Cast GM Freeze on player
++                }
++
++                if (map != 876)
++                {
++                    sLog->outError("Player (GUID: %u) tried to access GM Island. Sending possible hacker to %u,%u,%u,%u,%u", GetGUIDLow(), map, x, y, z, orientation);
++                    TeleportTo(map,x,y,z,orientation);
++                    if (map == 13)
++                        CastSpell(this, 9454, true); // Cast GM Freeze on player
++                }
++
++                if (sWorld->getBoolConfig(CONFIG_GMISLAND_BAN_ENABLE) == true)
++                {
++                    sLog->outError("Player (GUID: %u) tried to access GM Island. Banning Player Account.", GetGUIDLow());
++                    sWorld->BanAccount(BAN_ACCOUNT, this->GetName(),secsToTimeString(TimeStringToSecs("-1"),true).c_str(),"Being on GM Island","Anticheat protection");
++                }
++            }
++        }
++    }
++
+     m_zoneUpdateId    = newZone;
+     m_zoneUpdateTimer = ZONE_UPDATE_INTERVAL;
+
+diff -r a16a70a8d870 src/server/game/World/World.cpp
+--- a/src/server/game/World/World.cpp   Thu Nov 25 06:09:16 2010 +0000
++++ b/src/server/game/World/World.cpp   Fri Nov 26 01:29:16 2010 +0000
+@@ -1184,6 +1184,10 @@
+     // MySQL ping time interval
+     m_int_configs[CONFIG_DB_PING_INTERVAL] = sConfig->GetIntDefault("MaxPingTime", 30);
+ 
++    // Prevent players from accessing GM Island
++    m_bool_configs[CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE] = sConfig->GetBoolDefault("GMIsland.PlayersNoAccess.Enable", true);
++    m_bool_configs[CONFIG_GMISLAND_BAN_ENABLE] = sConfig->GetBoolDefault("GMIsland.Ban.Enable", false);
++
+     sScriptMgr->OnConfigLoad(reload);
+ }
+
+diff -r 1e78ea25fa24 src/server/game/World/World.h
+--- a/src/server/game/World/World.h     Thu Dec 02 02:53:10 2010 +0000
++++ b/src/server/game/World/World.h     Thu Dec 02 02:53:28 2010 +0000
+@@ -163,6 +163,8 @@
+     CONFIG_ALLOW_TICKETS,
+     CONFIG_DBC_ENFORCE_ITEM_ATTRIBUTES,
+     CONFIG_PRESERVE_CUSTOM_CHANNELS,
++    CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE,
++    CONFIG_GMISLAND_BAN_ENABLE,
+     BOOL_CONFIG_VALUE_COUNT
+ };
+
+diff -r a16a70a8d870 src/server/worldserver/worldserver.conf.dist
+--- a/src/server/worldserver/worldserver.conf.dist      Thu Nov 25 06:09:16 2010 +0000
++++ b/src/server/worldserver/worldserver.conf.dist      Fri Nov 26 01:29:16 2010 +0000
+@@ -2731,4 +2731,20 @@
+ LevelReq.Mail = 1
+ 
+ #
++#      GMIsland.PlayersNoAccess.Enable
++#        Prevent access for players to gm island
++#        Default: 1 - Enable
++#                 0 - Disable
++
++GMIsland.PlayersNoAccess.Enable = 1
++
++#
++#      GMIsland.Ban.Enable
++#        Enable to ban players that tries to access GM Island without proper Access
++#        Default: 0 - Disable
++#                 1 - Enable
++
++GMIsland.Ban.Enable = 0
++
++#
+ ###################################################################################################
+
+diff -r 0246485882aa src/server/game/Spells/SpellEffects.cpp
+--- a/src/server/game/Spells/SpellEffects.cpp   Fri Dec 24 09:53:55 2010 +0000
++++ b/src/server/game/Spells/SpellEffects.cpp   Fri Dec 24 09:57:14 2010 +0000
+@@ -5490,6 +5490,13 @@
+ 
+     Player* pTarget = (Player*)unitTarget;
+ 
++    // Prevent players from trying to unstuck themselves in the Jail box.
++    if (pTarget->GetMapId() == 13 && pTarget->GetSession()->GetSecurity() == SEC_PLAYER)
++    {
++        sLog->outError("Player %s (guid %u) tried to use unstuck in Jail box.", pTarget->GetName(), pTarget->GetGUIDLow());
++        return;
++    }
++
+     sLog->outDebug("Spell Effect: Stuck");
+     sLog->outDetail("Player %s (guid %u) used auto-unstuck future at map %u (%f, %f, %f)", pTarget->GetName(), pTarget->GetGUIDLow(), m_caster->GetMapId(), m_caster->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ());
+
+diff -r 8d9a2eb7c952 sql/tools/gmisland.teleport.sql
+--- /dev/null   Thu Jan 01 00:00:00 1970 +0000
++++ b/sql/tools/gmisland.teleport.sql   Wed Dec 01 11:54:07 2010 +0000
+@@ -0,0 +1,16 @@
++-- Put this SQL in character database.
++DROP TABLE IF EXISTS `gmisland_teleport`;
++CREATE TABLE `gmisland_teleport` (
++`map` SMALLINT(5) UNSIGNED NOT NULL DEFAULT '0',
++`x` DOUBLE NOT NULL DEFAULT '0',
++`y` DOUBLE NOT NULL DEFAULT '0',
++`z` DOUBLE NOT NULL DEFAULT '0',
++`orientation` DOUBLE NOT NULL DEFAULT '0',
++`comment` VARCHAR(255),
++PRIMARY KEY (`map`)
++) ENGINE = MYISAM DEFAULT CHARSET=utf8;
++
++INSERT INTO `gmisland_teleport` (
++`map`,`x`,`y`,`z`,`orientation`,`comment`)
++VALUES (
++'13','1.118799','0.477914','-144.708650','3.133046','Jail Box');
