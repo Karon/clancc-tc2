@@ -1,10 +1,11 @@
-diff -r 7a5e81a25faa src/server/game/Entities/Player/Player.cpp
---- a/src/server/game/Entities/Player/Player.cpp        Thu Dec 02 03:00:41 2010 +0000
-+++ b/src/server/game/Entities/Player/Player.cpp        Thu Dec 02 03:00:50 2010 +0000
-@@ -7050,6 +7050,48 @@
+diff --git a/src/server/game/Entities/Player/Player.cpp b/src/server/game/Entities/Player/Player.cpp
+index 4aa59ba..7b048d0 100755
+--- a/src/server/game/Entities/Player/Player.cpp
++++ b/src/server/game/Entities/Player/Player.cpp
+@@ -7349,6 +7349,48 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
          SendInitWorldStates(newZone, newArea);              // only if really enters to new zone, not just area change, works strange...
      }
- 
+
 +    // Prevent players from accessing GM Island
 +    if (sWorld->getBoolConfig(CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE) == true)
 +    {
@@ -50,13 +51,32 @@ diff -r 7a5e81a25faa src/server/game/Entities/Player/Player.cpp
      m_zoneUpdateId    = newZone;
      m_zoneUpdateTimer = ZONE_UPDATE_INTERVAL;
 
-diff -r a16a70a8d870 src/server/game/World/World.cpp
---- a/src/server/game/World/World.cpp   Thu Nov 25 06:09:16 2010 +0000
-+++ b/src/server/game/World/World.cpp   Fri Nov 26 01:29:16 2010 +0000
-@@ -1184,6 +1184,10 @@
+diff --git a/src/server/game/Spells/SpellEffects.cpp b/src/server/game/Spells/SpellEffects.cpp
+index 10edae9..9a36e54 100755
+--- a/src/server/game/Spells/SpellEffects.cpp
++++ b/src/server/game/Spells/SpellEffects.cpp
+@@ -5560,6 +5560,13 @@ void Spell::EffectStuck(SpellEffIndex /*effIndex*/)
+
+     Player* pTarget = (Player*)unitTarget;
+
++    // Prevent players from trying to unstuck themselves in the Jail box.
++    if (pTarget->GetMapId() == 13 && pTarget->GetSession()->GetSecurity() == SEC_PLAYER)
++    {
++        sLog->outError("Player %s (guid %u) tried to use unstuck in Jail box.", pTarget->GetName(), pTarget->GetGUIDLow());
++        return;
++    }
++
+     sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Spell Effect: Stuck");
+     sLog->outDetail("Player %s (guid %u) used auto-unstuck future at map %u (%f, %f, %f)", pTarget->GetName(), pTarget->GetGUIDLow(), m_caster->GetMapId(), m_caster->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ());
+
+diff --git a/src/server/game/World/World.cpp b/src/server/game/World/World.cpp
+index be7c17b..ba2f3a3 100755
+--- a/src/server/game/World/World.cpp
++++ b/src/server/game/World/World.cpp
+@@ -1182,6 +1182,10 @@ void World::LoadConfigSettings(bool reload)
      // MySQL ping time interval
      m_int_configs[CONFIG_DB_PING_INTERVAL] = sConfig->GetIntDefault("MaxPingTime", 30);
- 
+
 +    // Prevent players from accessing GM Island
 +    m_bool_configs[CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE] = sConfig->GetBoolDefault("GMIsland.PlayersNoAccess.Enable", true);
 +    m_bool_configs[CONFIG_GMISLAND_BAN_ENABLE] = sConfig->GetBoolDefault("GMIsland.Ban.Enable", false);
@@ -64,10 +84,11 @@ diff -r a16a70a8d870 src/server/game/World/World.cpp
      sScriptMgr->OnConfigLoad(reload);
  }
 
-diff -r 1e78ea25fa24 src/server/game/World/World.h
---- a/src/server/game/World/World.h     Thu Dec 02 02:53:10 2010 +0000
-+++ b/src/server/game/World/World.h     Thu Dec 02 02:53:28 2010 +0000
-@@ -163,6 +163,8 @@
+diff --git a/src/server/game/World/World.h b/src/server/game/World/World.h
+index 7e052ed..b12308b 100755
+--- a/src/server/game/World/World.h
++++ b/src/server/game/World/World.h
+@@ -163,6 +163,8 @@ enum WorldBoolConfigs
      CONFIG_ALLOW_TICKETS,
      CONFIG_DBC_ENFORCE_ITEM_ATTRIBUTES,
      CONFIG_PRESERVE_CUSTOM_CHANNELS,
@@ -76,12 +97,13 @@ diff -r 1e78ea25fa24 src/server/game/World/World.h
      BOOL_CONFIG_VALUE_COUNT
  };
 
-diff -r a16a70a8d870 src/server/worldserver/worldserver.conf.dist
---- a/src/server/worldserver/worldserver.conf.dist      Thu Nov 25 06:09:16 2010 +0000
-+++ b/src/server/worldserver/worldserver.conf.dist      Fri Nov 26 01:29:16 2010 +0000
-@@ -2731,4 +2731,20 @@
+diff --git a/src/server/worldserver/worldserver.conf.dist b/src/server/worldserver/worldserver.conf.dist
+index 3109c92..46171ac 100644
+--- a/src/server/worldserver/worldserver.conf.dist
++++ b/src/server/worldserver/worldserver.conf.dist
+@@ -2768,4 +2768,20 @@ LevelReq.Auction = 1
  LevelReq.Mail = 1
- 
+
  #
 +#      GMIsland.PlayersNoAccess.Enable
 +#        Prevent access for players to gm island
@@ -100,41 +122,3 @@ diff -r a16a70a8d870 src/server/worldserver/worldserver.conf.dist
 +
 +#
  ###################################################################################################
-
-diff -r 0246485882aa src/server/game/Spells/SpellEffects.cpp
---- a/src/server/game/Spells/SpellEffects.cpp   Fri Dec 24 09:53:55 2010 +0000
-+++ b/src/server/game/Spells/SpellEffects.cpp   Fri Dec 24 09:57:14 2010 +0000
-@@ -5490,6 +5490,13 @@
- 
-     Player* pTarget = (Player*)unitTarget;
- 
-+    // Prevent players from trying to unstuck themselves in the Jail box.
-+    if (pTarget->GetMapId() == 13 && pTarget->GetSession()->GetSecurity() == SEC_PLAYER)
-+    {
-+        sLog->outError("Player %s (guid %u) tried to use unstuck in Jail box.", pTarget->GetName(), pTarget->GetGUIDLow());
-+        return;
-+    }
-+
-     sLog->outDebug("Spell Effect: Stuck");
-     sLog->outDetail("Player %s (guid %u) used auto-unstuck future at map %u (%f, %f, %f)", pTarget->GetName(), pTarget->GetGUIDLow(), m_caster->GetMapId(), m_caster->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ());
-
-diff -r 8d9a2eb7c952 sql/tools/gmisland.teleport.sql
---- /dev/null   Thu Jan 01 00:00:00 1970 +0000
-+++ b/sql/tools/gmisland.teleport.sql   Wed Dec 01 11:54:07 2010 +0000
-@@ -0,0 +1,16 @@
-+-- Put this SQL in character database.
-+DROP TABLE IF EXISTS `gmisland_teleport`;
-+CREATE TABLE `gmisland_teleport` (
-+`map` SMALLINT(5) UNSIGNED NOT NULL DEFAULT '0',
-+`x` DOUBLE NOT NULL DEFAULT '0',
-+`y` DOUBLE NOT NULL DEFAULT '0',
-+`z` DOUBLE NOT NULL DEFAULT '0',
-+`orientation` DOUBLE NOT NULL DEFAULT '0',
-+`comment` VARCHAR(255),
-+PRIMARY KEY (`map`)
-+) ENGINE = MYISAM DEFAULT CHARSET=utf8;
-+
-+INSERT INTO `gmisland_teleport` (
-+`map`,`x`,`y`,`z`,`orientation`,`comment`)
-+VALUES (
-+'13','1.118799','0.477914','-144.708650','3.133046','Jail Box');
