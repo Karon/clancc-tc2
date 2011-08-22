@@ -1,11 +1,11 @@
 diff --git a/src/server/game/Entities/Player/Player.cpp b/src/server/game/Entities/Player/Player.cpp
-index 4aa59ba..7b048d0 100755
+index f8fe2df..6942304 100755
 --- a/src/server/game/Entities/Player/Player.cpp
 +++ b/src/server/game/Entities/Player/Player.cpp
-@@ -7349,6 +7349,48 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
+@@ -7401,6 +7401,47 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
+         sOutdoorPvPMgr->HandlePlayerEnterZone(this, newZone);
          SendInitWorldStates(newZone, newArea);              // only if really enters to new zone, not just area change, works strange...
      }
-
 +    // Prevent players from accessing GM Island
 +    if (sWorld->getBoolConfig(CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE) == true)
 +    {
@@ -47,15 +47,14 @@ index 4aa59ba..7b048d0 100755
 +            }
 +        }
 +    }
-+
+
      m_zoneUpdateId    = newZone;
      m_zoneUpdateTimer = ZONE_UPDATE_INTERVAL;
-
 diff --git a/src/server/game/Spells/SpellEffects.cpp b/src/server/game/Spells/SpellEffects.cpp
-index 10edae9..9a36e54 100755
+index 825c8c4..74d5288 100755
 --- a/src/server/game/Spells/SpellEffects.cpp
 +++ b/src/server/game/Spells/SpellEffects.cpp
-@@ -5560,6 +5560,13 @@ void Spell::EffectStuck(SpellEffIndex /*effIndex*/)
+@@ -5464,6 +5464,13 @@ void Spell::EffectStuck(SpellEffIndex /*effIndex*/)
 
      Player* pTarget = (Player*)unitTarget;
 
@@ -69,11 +68,38 @@ index 10edae9..9a36e54 100755
      sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Spell Effect: Stuck");
      sLog->outDetail("Player %s (guid %u) used auto-unstuck future at map %u (%f, %f, %f)", pTarget->GetName(), pTarget->GetGUIDLow(), m_caster->GetMapId(), m_caster->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ());
 
+@@ -5863,7 +5870,7 @@ void Spell::EffectReputation(SpellEffIndex effIndex)
+     {
+         rep_change = int32((float)rep_change * repData->spell_rate);
+     }
+-
++
+     // Bonus from spells that increase reputation gain
+     float bonus = rep_change * _player->GetTotalAuraModifier(SPELL_AURA_MOD_REPUTATION_GAIN) / 100.0; // 10%
+     rep_change += (int32)bonus;
+@@ -6959,7 +6966,7 @@ void Spell::EffectCastButtons(SpellEffIndex effIndex)
+         if (!ab || ab->GetType() != ACTION_BUTTON_SPELL)
+             continue;
+
+-        //! Action button data is unverified when it's set so it can be "hacked"
++        //! Action button data is unverified when it's set so it can be "hacked"
+         //! to contain invalid spells, so filter here.
+         uint32 spell_id = ab->GetAction();
+         if (!spell_id)
+@@ -6974,7 +6981,7 @@ void Spell::EffectCastButtons(SpellEffIndex effIndex)
+
+         if (!(spellInfo->AttributesEx7 & SPELL_ATTR7_SUMMON_PLAYER_TOTEM))
+             continue;
+-
++
+         uint32 cost = spellInfo->CalcPowerCost(m_caster, spellInfo->GetSchoolMask());
+         if (m_caster->GetPower(POWER_MANA) < cost)
+             continue;
 diff --git a/src/server/game/World/World.cpp b/src/server/game/World/World.cpp
-index be7c17b..ba2f3a3 100755
+index 639af40..ec25e0f 100755
 --- a/src/server/game/World/World.cpp
 +++ b/src/server/game/World/World.cpp
-@@ -1182,6 +1182,10 @@ void World::LoadConfigSettings(bool reload)
+@@ -1183,6 +1183,10 @@ void World::LoadConfigSettings(bool reload)
      // MySQL ping time interval
      m_int_configs[CONFIG_DB_PING_INTERVAL] = sConfig->GetIntDefault("MaxPingTime", 30);
 
@@ -85,10 +111,10 @@ index be7c17b..ba2f3a3 100755
  }
 
 diff --git a/src/server/game/World/World.h b/src/server/game/World/World.h
-index 7e052ed..b12308b 100755
+index b045ce6..07fc1fc 100755
 --- a/src/server/game/World/World.h
 +++ b/src/server/game/World/World.h
-@@ -163,6 +163,8 @@ enum WorldBoolConfigs
+@@ -158,6 +158,8 @@ enum WorldBoolConfigs
      CONFIG_ALLOW_TICKETS,
      CONFIG_DBC_ENFORCE_ITEM_ATTRIBUTES,
      CONFIG_PRESERVE_CUSTOM_CHANNELS,
@@ -98,7 +124,7 @@ index 7e052ed..b12308b 100755
  };
 
 diff --git a/src/server/worldserver/worldserver.conf.dist b/src/server/worldserver/worldserver.conf.dist
-index 3109c92..46171ac 100644
+index d9ce9ee..7a8433c 100644
 --- a/src/server/worldserver/worldserver.conf.dist
 +++ b/src/server/worldserver/worldserver.conf.dist
 @@ -2768,4 +2768,20 @@ LevelReq.Auction = 1
