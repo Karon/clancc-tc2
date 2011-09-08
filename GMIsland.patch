@@ -1,15 +1,15 @@
 diff --git a/src/server/game/Entities/Player/Player.cpp b/src/server/game/Entities/Player/Player.cpp
-index f8fe2df..6942304 100755
+index 01903e8..8ebcf33 100755
 --- a/src/server/game/Entities/Player/Player.cpp
 +++ b/src/server/game/Entities/Player/Player.cpp
-@@ -7401,6 +7401,47 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
-         sOutdoorPvPMgr->HandlePlayerEnterZone(this, newZone);
+@@ -7399,6 +7399,48 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
          SendInitWorldStates(newZone, newArea);              // only if really enters to new zone, not just area change, works strange...
      }
+
 +    // Prevent players from accessing GM Island
 +    if (sWorld->getBoolConfig(CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE) == true)
 +    {
-+        if (newZone == 876 && GetSession()->GetSecurity() == SEC_PLAYER)
++        if (newZone == 876 && AccountMgr::IsPlayerAccount(GetSession()->GetSecurity())
 +        {
 +            QueryResult result = CharacterDatabase.PQuery("SELECT * FROM `gmisland_teleport` WHERE 1");
 +
@@ -47,19 +47,38 @@ index f8fe2df..6942304 100755
 +            }
 +        }
 +    }
-
++
      m_zoneUpdateId    = newZone;
      m_zoneUpdateTimer = ZONE_UPDATE_INTERVAL;
+
+@@ -15269,7 +15311,7 @@ bool Player::SatisfyQuestReputation(Quest const* qInfo, bool msg)
+             SendCanTakeQuestResponse(INVALIDREASON_DONT_HAVE_REQ);
+         return false;
+     }
+-
++
+     // ReputationObjective2 does not seem to be an objective requirement but a requirement
+     // to be able to accept the quest
+     uint32 fIdObj = qInfo->GetRepObjectiveFaction2();
+@@ -15848,7 +15890,7 @@ void Player::KilledPlayerCredit()
+             {
+                 uint32 reqkill = qInfo->GetPlayersSlain();
+                 uint16 curkill = q_status.m_playercount;
+-
++
+                 if (curkill < reqkill)
+                 {
+                     q_status.m_playercount = curkill + addkillcount;
 diff --git a/src/server/game/Spells/SpellEffects.cpp b/src/server/game/Spells/SpellEffects.cpp
-index 825c8c4..74d5288 100755
+index 2642ed6..83e62bc 100755
 --- a/src/server/game/Spells/SpellEffects.cpp
 +++ b/src/server/game/Spells/SpellEffects.cpp
-@@ -5464,6 +5464,13 @@ void Spell::EffectStuck(SpellEffIndex /*effIndex*/)
+@@ -5466,6 +5466,13 @@ void Spell::EffectStuck(SpellEffIndex /*effIndex*/)
 
      Player* pTarget = (Player*)unitTarget;
 
 +    // Prevent players from trying to unstuck themselves in the Jail box.
-+    if (pTarget->GetMapId() == 13 && pTarget->GetSession()->GetSecurity() == SEC_PLAYER)
++    if (pTarget->GetMapId() == 13 && AccountMgr::IsPlayerAccount(pTarget->GetSession()->GetSecurity()))
 +    {
 +        sLog->outError("Player %s (guid %u) tried to use unstuck in Jail box.", pTarget->GetName(), pTarget->GetGUIDLow());
 +        return;
@@ -68,35 +87,8 @@ index 825c8c4..74d5288 100755
      sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Spell Effect: Stuck");
      sLog->outDetail("Player %s (guid %u) used auto-unstuck future at map %u (%f, %f, %f)", pTarget->GetName(), pTarget->GetGUIDLow(), m_caster->GetMapId(), m_caster->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ());
 
-@@ -5863,7 +5870,7 @@ void Spell::EffectReputation(SpellEffIndex effIndex)
-     {
-         rep_change = int32((float)rep_change * repData->spell_rate);
-     }
--
-+
-     // Bonus from spells that increase reputation gain
-     float bonus = rep_change * _player->GetTotalAuraModifier(SPELL_AURA_MOD_REPUTATION_GAIN) / 100.0; // 10%
-     rep_change += (int32)bonus;
-@@ -6959,7 +6966,7 @@ void Spell::EffectCastButtons(SpellEffIndex effIndex)
-         if (!ab || ab->GetType() != ACTION_BUTTON_SPELL)
-             continue;
-
--        //! Action button data is unverified when it's set so it can be "hacked"
-+        //! Action button data is unverified when it's set so it can be "hacked"
-         //! to contain invalid spells, so filter here.
-         uint32 spell_id = ab->GetAction();
-         if (!spell_id)
-@@ -6974,7 +6981,7 @@ void Spell::EffectCastButtons(SpellEffIndex effIndex)
-
-         if (!(spellInfo->AttributesEx7 & SPELL_ATTR7_SUMMON_PLAYER_TOTEM))
-             continue;
--
-+
-         uint32 cost = spellInfo->CalcPowerCost(m_caster, spellInfo->GetSchoolMask());
-         if (m_caster->GetPower(POWER_MANA) < cost)
-             continue;
 diff --git a/src/server/game/World/World.cpp b/src/server/game/World/World.cpp
-index 639af40..ec25e0f 100755
+index d16e49b..7c6da9b 100755
 --- a/src/server/game/World/World.cpp
 +++ b/src/server/game/World/World.cpp
 @@ -1183,6 +1183,10 @@ void World::LoadConfigSettings(bool reload)
