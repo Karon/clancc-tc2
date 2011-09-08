@@ -51,24 +51,6 @@ index 01903e8..8ebcf33 100755
      m_zoneUpdateId    = newZone;
      m_zoneUpdateTimer = ZONE_UPDATE_INTERVAL;
 
-@@ -15269,7 +15311,7 @@ bool Player::SatisfyQuestReputation(Quest const* qInfo, bool msg)
-             SendCanTakeQuestResponse(INVALIDREASON_DONT_HAVE_REQ);
-         return false;
-     }
--
-+
-     // ReputationObjective2 does not seem to be an objective requirement but a requirement
-     // to be able to accept the quest
-     uint32 fIdObj = qInfo->GetRepObjectiveFaction2();
-@@ -15848,7 +15890,7 @@ void Player::KilledPlayerCredit()
-             {
-                 uint32 reqkill = qInfo->GetPlayersSlain();
-                 uint16 curkill = q_status.m_playercount;
--
-+
-                 if (curkill < reqkill)
-                 {
-                     q_status.m_playercount = curkill + addkillcount;
 diff --git a/src/server/game/Spells/SpellEffects.cpp b/src/server/game/Spells/SpellEffects.cpp
 index 2642ed6..83e62bc 100755
 --- a/src/server/game/Spells/SpellEffects.cpp
