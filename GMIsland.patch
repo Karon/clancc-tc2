@@ -9,7 +9,7 @@ index 01903e8..8ebcf33 100755
 +    // Prevent players from accessing GM Island
 +    if (sWorld->getBoolConfig(CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE) == true)
 +    {
-+        if (newZone == 876 && AccountMgr::IsPlayerAccount(GetSession()->GetSecurity())
++        if (newZone == 876 && AccountMgr::IsPlayerAccount(GetSession()->GetSecurity()))
 +        {
 +            QueryResult result = CharacterDatabase.PQuery("SELECT * FROM `gmisland_teleport` WHERE 1");
 +
