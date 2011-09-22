@@ -13,10 +13,10 @@ index 01903e8..8ebcf33 100755
 +        {
 +            QueryResult result = CharacterDatabase.PQuery("SELECT * FROM `gmisland_teleport` WHERE 1");
 +
-+            Field* fields = result->Fetch();
-+
 +            if (result)
 +            {
++                Field* fields = result->Fetch();
++
 +                uint32   map           = fields[0].GetUInt32();
 +                double   x             = fields[1].GetDouble();
 +                double   y             = fields[2].GetDouble();
