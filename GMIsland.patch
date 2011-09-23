@@ -1,8 +1,16 @@
 diff --git a/src/server/game/Entities/Player/Player.cpp b/src/server/game/Entities/Player/Player.cpp
-index 8e75ca4..14fa3ae 100755
+index 8e75ca4..01b3ec5 100755
 --- a/src/server/game/Entities/Player/Player.cpp
 +++ b/src/server/game/Entities/Player/Player.cpp
-@@ -7414,6 +7414,54 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
+@@ -17,6 +17,7 @@
+  */
+ 
+ #include "Common.h"
++#include "Config.h"
+ #include "Language.h"
+ #include "DatabaseEnv.h"
+ #include "Log.h"
+@@ -7414,6 +7415,54 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
          SendInitWorldStates(newZone, newArea);              // only if really enters to new zone, not just area change, works strange...
      }
  
