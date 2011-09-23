@@ -1,8 +1,8 @@
 diff --git a/src/server/game/Entities/Player/Player.cpp b/src/server/game/Entities/Player/Player.cpp
-index 01903e8..8ebcf33 100755
+index da12445..1511013 100755
 --- a/src/server/game/Entities/Player/Player.cpp
 +++ b/src/server/game/Entities/Player/Player.cpp
-@@ -7399,6 +7399,48 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
+@@ -7428,6 +7428,54 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
          SendInitWorldStates(newZone, newArea);              // only if really enters to new zone, not just area change, works strange...
      }
 
@@ -11,7 +11,7 @@ index 01903e8..8ebcf33 100755
 +    {
 +        if (newZone == 876 && AccountMgr::IsPlayerAccount(GetSession()->GetSecurity()))
 +        {
-+            QueryResult result = CharacterDatabase.Query("SELECT * FROM `gmisland_teleport` WHERE 1");
++            QueryResult result = CharacterDatabase.Query("SELECT * FROM `gmisland_teleport` LIMIT 1");
 +
 +            if (result)
 +            {
@@ -25,25 +25,31 @@ index 01903e8..8ebcf33 100755
 +
 +                if (map == 876)
 +                {
-+                    sLog->outError("Player (GUID: %u) tried to access GM Island.", GetGUIDLow());
-+                    sLog->outError("Error: Cannot set tele to GM Island (map: %u). Sending possible hacker to default location. (Jail Box)",map);
-+                    TeleportTo(13,1.118799,0.477914,-144.708650,3.133046); // Tele to Jail Box
++                    sLog->outError("Error: Cannot set tele to GM Island (map: 876). Sending possible hacker to default location. (Jail Box)");
++                    map = 13;
++                    x = 1.118799;
++                    y = 0.477914;
++                    z = -144.708650;
++                    orientation = 3.133046;
++                }
++
++                sLog->outError("Player (GUID: %u) tried to access GM Island.", GetGUIDLow());
++                TeleportTo(map,x,y,z,orientation); // Tele to Jail Box
++                if (map == 13)
 +                    CastSpell(this, 9454, true); // Cast GM Freeze on player
-+                }
++            }
++            else
++            {
++                sLog->outError("Player (GUID: %u) tried to access GM Island.", GetGUIDLow());
++                sLog->outError("Error: Cannot set tele to custom place (couldn't find the table). Sending possible hacker to default location. (Jail Box)");
++                TeleportTo(13,1.118799,0.477914,-144.708650,3.133046);
++                CastSpell(this, 9454, true); // Cast GM Freeze on player
++            }
 +
-+                if (map != 876)
-+                {
-+                    sLog->outError("Player (GUID: %u) tried to access GM Island. Sending possible hacker to %u,%u,%u,%u,%u", GetGUIDLow(), map, x, y, z, orientation);
-+                    TeleportTo(map,x,y,z,orientation);
-+                    if (map == 13)
-+                        CastSpell(this, 9454, true); // Cast GM Freeze on player
-+                }
-+
-+                if (sWorld->getBoolConfig(CONFIG_GMISLAND_BAN_ENABLE) == true)
-+                {
-+                    sLog->outError("Player (GUID: %u) tried to access GM Island. Banning Player Account.", GetGUIDLow());
-+                    sWorld->BanAccount(BAN_ACCOUNT, this->GetName(),secsToTimeString(TimeStringToSecs("-1"),true).c_str(),"Being on GM Island","Anticheat protection");
-+                }
++            if (sWorld->getBoolConfig(CONFIG_GMISLAND_BAN_ENABLE) == true)
++            {
++                sLog->outError("Player (GUID: %u) tried to access GM Island. Banning Player Account.", GetGUIDLow());
++                sWorld->BanAccount(BAN_ACCOUNT, this->GetName(),secsToTimeString(TimeStringToSecs("-1"),true).c_str(),"Being on GM Island","Anticheat protection");
 +            }
 +        }
 +    }
