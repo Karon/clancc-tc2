@@ -11,7 +11,7 @@ index 01903e8..8ebcf33 100755
 +    {
 +        if (newZone == 876 && AccountMgr::IsPlayerAccount(GetSession()->GetSecurity()))
 +        {
-+            QueryResult result = CharacterDatabase.PQuery("SELECT * FROM `gmisland_teleport` WHERE 1");
++            QueryResult result = CharacterDatabase.Query("SELECT * FROM `gmisland_teleport` WHERE 1");
 +
 +            if (result)
 +            {
