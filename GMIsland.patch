@@ -89,11 +89,11 @@ index 9f1d99c..eb5c9a2 100755
 +++ b/src/server/game/World/World.cpp
 @@ -1185,6 +1185,10 @@ void World::LoadConfigSettings(bool reload)
      // MySQL ping time interval
-     m_int_configs[CONFIG_DB_PING_INTERVAL] = sConfig->GetIntDefault("MaxPingTime", 30);
+     m_int_configs[CONFIG_DB_PING_INTERVAL] = ConfigMgr::GetIntDefault("MaxPingTime", 30);
 
 +    // Prevent players from accessing GM Island
-+    m_bool_configs[CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE] = sConfig->GetBoolDefault("GMIsland.PlayersNoAccess.Enable", true);
-+    m_bool_configs[CONFIG_GMISLAND_BAN_ENABLE] = sConfig->GetBoolDefault("GMIsland.Ban.Enable", false);
++    m_bool_configs[CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE] = ConfigMgr::GetBoolDefault("GMIsland.PlayersNoAccess.Enable", true);
++    m_bool_configs[CONFIG_GMISLAND_BAN_ENABLE] = ConfigMgr::GetBoolDefault("GMIsland.Ban.Enable", false);
 +
      sScriptMgr->OnConfigLoad(reload);
  }
