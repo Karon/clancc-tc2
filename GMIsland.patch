@@ -4,7 +4,7 @@ index 8e75ca4..01b3ec5 100755
 +++ b/src/server/game/Entities/Player/Player.cpp
 @@ -17,6 +17,7 @@
   */
- 
+
  #include "Common.h"
 +#include "Config.h"
  #include "Language.h"
@@ -13,7 +13,7 @@ index 8e75ca4..01b3ec5 100755
 @@ -7414,6 +7415,54 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
          SendInitWorldStates(newZone, newArea);              // only if really enters to new zone, not just area change, works strange...
      }
- 
+
 +    // Prevent players from accessing GM Island
 +    if (sWorld->getBoolConfig(CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE) == true)
 +    {
@@ -22,7 +22,7 @@ index 8e75ca4..01b3ec5 100755
 +            uint32 map = 13;
 +            double coords[4] = { 1.118799, 0.477914, -144.708650, 3.133046 }; // Jail Box
 +
-+            std::string config = sConfig->GetStringDefault("GMIsland.TeleportTo", "");
++            std::string config = ConfigMgr::GetStringDefault("GMIsland.TeleportTo", "");
 +            if (config != "")
 +            {
 +                std::istringstream ss(config);
@@ -64,15 +64,15 @@ index 8e75ca4..01b3ec5 100755
 +
      m_zoneUpdateId    = newZone;
      m_zoneUpdateTimer = ZONE_UPDATE_INTERVAL;
- 
+
 diff --git a/src/server/game/Spells/SpellEffects.cpp b/src/server/game/Spells/SpellEffects.cpp
 index f0e6339..607a9a4 100755
 --- a/src/server/game/Spells/SpellEffects.cpp
 +++ b/src/server/game/Spells/SpellEffects.cpp
 @@ -5464,6 +5464,13 @@ void Spell::EffectStuck(SpellEffIndex /*effIndex*/)
- 
+
      Player* pTarget = (Player*)unitTarget;
- 
+
 +    // Prevent players from trying to unstuck themselves in the Jail box.
 +    if (pTarget->GetMapId() == 13 && AccountMgr::IsPlayerAccount(pTarget->GetSession()->GetSecurity()))
 +    {
@@ -82,7 +82,7 @@ index f0e6339..607a9a4 100755
 +
      sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "Spell Effect: Stuck");
      sLog->outDetail("Player %s (guid %u) used auto-unstuck future at map %u (%f, %f, %f)", pTarget->GetName(), pTarget->GetGUIDLow(), m_caster->GetMapId(), m_caster->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ());
- 
+
 diff --git a/src/server/game/World/World.cpp b/src/server/game/World/World.cpp
 index 9f1d99c..eb5c9a2 100755
 --- a/src/server/game/World/World.cpp
@@ -90,14 +90,14 @@ index 9f1d99c..eb5c9a2 100755
 @@ -1185,6 +1185,10 @@ void World::LoadConfigSettings(bool reload)
      // MySQL ping time interval
      m_int_configs[CONFIG_DB_PING_INTERVAL] = sConfig->GetIntDefault("MaxPingTime", 30);
- 
+
 +    // Prevent players from accessing GM Island
 +    m_bool_configs[CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE] = sConfig->GetBoolDefault("GMIsland.PlayersNoAccess.Enable", true);
 +    m_bool_configs[CONFIG_GMISLAND_BAN_ENABLE] = sConfig->GetBoolDefault("GMIsland.Ban.Enable", false);
 +
      sScriptMgr->OnConfigLoad(reload);
  }
- 
+
 diff --git a/src/server/game/World/World.h b/src/server/game/World/World.h
 index 75a3f67..541a659 100755
 --- a/src/server/game/World/World.h
@@ -110,14 +110,14 @@ index 75a3f67..541a659 100755
 +    CONFIG_GMISLAND_BAN_ENABLE,
      BOOL_CONFIG_VALUE_COUNT
  };
- 
+
 diff --git a/src/server/worldserver/worldserver.conf.dist b/src/server/worldserver/worldserver.conf.dist
 index 75020b7..0c36a64 100644
 --- a/src/server/worldserver/worldserver.conf.dist
 +++ b/src/server/worldserver/worldserver.conf.dist
 @@ -2770,4 +2770,27 @@ LevelReq.Auction = 1
  LevelReq.Mail = 1
- 
+
  #
 +#      GMIsland.PlayersNoAccess.Enable
 +#        Prevent access for players to gm island
