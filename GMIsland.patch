@@ -84,12 +84,12 @@ index f0e6339..607a9a4 100755
      sLog->outDetail("Player %s (guid %u) used auto-unstuck future at map %u (%f, %f, %f)", pTarget->GetName(), pTarget->GetGUIDLow(), m_caster->GetMapId(), m_caster->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ());
 
 diff --git a/src/server/game/World/World.cpp b/src/server/game/World/World.cpp
-index 9f1d99c..eb5c9a2 100755
+index 34b93c7..62f8f01 100755
 --- a/src/server/game/World/World.cpp
 +++ b/src/server/game/World/World.cpp
-@@ -1185,6 +1185,10 @@ void World::LoadConfigSettings(bool reload)
-     // MySQL ping time interval
-     m_int_configs[CONFIG_DB_PING_INTERVAL] = ConfigMgr::GetIntDefault("MaxPingTime", 30);
+@@ -1193,6 +1193,10 @@ void World::LoadConfigSettings(bool reload)
+     m_bool_configs[CONFIG_PDUMP_NO_PATHS] = ConfigMgr::GetBoolDefault("PlayerDump.DisallowPaths", true);
+     m_bool_configs[CONFIG_PDUMP_NO_OVERWRITE] = ConfigMgr::GetBoolDefault("PlayerDump.DisallowOverwrite", true);
 
 +    // Prevent players from accessing GM Island
 +    m_bool_configs[CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE] = ConfigMgr::GetBoolDefault("GMIsland.PlayersNoAccess.Enable", true);
@@ -99,24 +99,24 @@ index 9f1d99c..eb5c9a2 100755
  }
 
 diff --git a/src/server/game/World/World.h b/src/server/game/World/World.h
-index 75a3f67..541a659 100755
+index 7430dd2..93cb594 100755
 --- a/src/server/game/World/World.h
 +++ b/src/server/game/World/World.h
-@@ -158,6 +158,8 @@ enum WorldBoolConfigs
-     CONFIG_ALLOW_TICKETS,
-     CONFIG_DBC_ENFORCE_ITEM_ATTRIBUTES,
+@@ -160,6 +160,8 @@ enum WorldBoolConfigs
      CONFIG_PRESERVE_CUSTOM_CHANNELS,
+     CONFIG_PDUMP_NO_PATHS,
+     CONFIG_PDUMP_NO_OVERWRITE,
 +    CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE,
 +    CONFIG_GMISLAND_BAN_ENABLE,
      BOOL_CONFIG_VALUE_COUNT
  };
 
 diff --git a/src/server/worldserver/worldserver.conf.dist b/src/server/worldserver/worldserver.conf.dist
-index 75020b7..0c36a64 100644
+index a8c0d91..ab1a1ef 100644
 --- a/src/server/worldserver/worldserver.conf.dist
 +++ b/src/server/worldserver/worldserver.conf.dist
-@@ -2770,4 +2770,27 @@ LevelReq.Auction = 1
- LevelReq.Mail = 1
+@@ -2784,4 +2784,27 @@ PlayerDump.DisallowPaths = 1
+ PlayerDump.DisallowOverwrite = 1
 
  #
 +#      GMIsland.PlayersNoAccess.Enable
