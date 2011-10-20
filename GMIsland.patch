@@ -66,12 +66,12 @@ index 8e75ca4..01b3ec5 100755
      m_zoneUpdateTimer = ZONE_UPDATE_INTERVAL;
 
 diff --git a/src/server/game/Spells/SpellEffects.cpp b/src/server/game/Spells/SpellEffects.cpp
-index f0e6339..607a9a4 100755
+index 83cecf7..d2ff8df 100755
 --- a/src/server/game/Spells/SpellEffects.cpp
 +++ b/src/server/game/Spells/SpellEffects.cpp
-@@ -5464,6 +5464,13 @@ void Spell::EffectStuck(SpellEffIndex /*effIndex*/)
+@@ -5626,6 +5626,13 @@ void Spell::EffectStuck(SpellEffIndex /*effIndex*/)
 
-     Player* target = (Player*)unitTarget;
+     Player* target = (Player*)m_caster;
 
 +    // Prevent players from trying to unstuck themselves in the Jail box.
 +    if (target->GetMapId() == 13 && AccountMgr::IsPlayerAccount(target->GetSession()->GetSecurity()))
