@@ -10,7 +10,7 @@ index 8e75ca4..01b3ec5 100755
  #include "Language.h"
  #include "DatabaseEnv.h"
  #include "Log.h"
-@@ -7414,6 +7415,54 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
+@@ -7391,6 +7391,54 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
          SendInitWorldStates(newZone, newArea);              // only if really enters to new zone, not just area change, works strange...
      }
 
@@ -62,8 +62,9 @@ index 8e75ca4..01b3ec5 100755
 +        }
 +    }
 +
-     m_zoneUpdateId    = newZone;
-     m_zoneUpdateTimer = ZONE_UPDATE_INTERVAL;
+     // group update
+     if (GetGroup())
+     {
 
 diff --git a/src/server/game/Spells/SpellEffects.cpp b/src/server/game/Spells/SpellEffects.cpp
 index 83cecf7..d2ff8df 100755
