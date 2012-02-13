@@ -1,5 +1,5 @@
 diff --git a/src/server/game/Entities/Player/Player.cpp b/src/server/game/Entities/Player/Player.cpp
-index 8e75ca4..01b3ec5 100755
+index 630551c..fad4682 100755
 --- a/src/server/game/Entities/Player/Player.cpp
 +++ b/src/server/game/Entities/Player/Player.cpp
 @@ -17,6 +17,7 @@
@@ -10,7 +10,7 @@ index 8e75ca4..01b3ec5 100755
  #include "Language.h"
  #include "DatabaseEnv.h"
  #include "Log.h"
-@@ -7391,6 +7391,54 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
+@@ -7381,6 +7382,54 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
          SendInitWorldStates(newZone, newArea);              // only if really enters to new zone, not just area change, works strange...
      }
 
@@ -65,12 +65,11 @@ index 8e75ca4..01b3ec5 100755
      // group update
      if (GetGroup())
      {
-
 diff --git a/src/server/game/Spells/SpellEffects.cpp b/src/server/game/Spells/SpellEffects.cpp
-index 83cecf7..d2ff8df 100755
+index ef5f32b..8f7d8f2 100755
 --- a/src/server/game/Spells/SpellEffects.cpp
 +++ b/src/server/game/Spells/SpellEffects.cpp
-@@ -5626,6 +5626,13 @@ void Spell::EffectStuck(SpellEffIndex /*effIndex*/)
+@@ -5659,6 +5659,13 @@ void Spell::EffectStuck(SpellEffIndex /*effIndex*/)
 
      Player* target = (Player*)m_caster;
 
@@ -85,10 +84,10 @@ index 83cecf7..d2ff8df 100755
      sLog->outDetail("Player %s (guid %u) used auto-unstuck future at map %u (%f, %f, %f)", target->GetName(), target->GetGUIDLow(), m_caster->GetMapId(), m_caster->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
 
 diff --git a/src/server/game/World/World.cpp b/src/server/game/World/World.cpp
-index 34b93c7..62f8f01 100755
+index 354b36b..4591f73 100755
 --- a/src/server/game/World/World.cpp
 +++ b/src/server/game/World/World.cpp
-@@ -1193,6 +1193,10 @@ void World::LoadConfigSettings(bool reload)
+@@ -1191,6 +1191,10 @@ void World::LoadConfigSettings(bool reload)
      m_bool_configs[CONFIG_PDUMP_NO_PATHS] = ConfigMgr::GetBoolDefault("PlayerDump.DisallowPaths", true);
      m_bool_configs[CONFIG_PDUMP_NO_OVERWRITE] = ConfigMgr::GetBoolDefault("PlayerDump.DisallowOverwrite", true);
 
@@ -100,23 +99,23 @@ index 34b93c7..62f8f01 100755
  }
 
 diff --git a/src/server/game/World/World.h b/src/server/game/World/World.h
-index 7430dd2..93cb594 100755
+index 18d3200..d61b3c3 100755
 --- a/src/server/game/World/World.h
 +++ b/src/server/game/World/World.h
-@@ -160,6 +160,8 @@ enum WorldBoolConfigs
-     CONFIG_PRESERVE_CUSTOM_CHANNELS,
-     CONFIG_PDUMP_NO_PATHS,
+@@ -162,6 +162,8 @@ enum WorldBoolConfigs
      CONFIG_PDUMP_NO_OVERWRITE,
+     CONFIG_QUEST_IGNORE_AUTO_ACCEPT,
+     CONFIG_QUEST_IGNORE_AUTO_COMPLETE,
 +    CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE,
 +    CONFIG_GMISLAND_BAN_ENABLE,
      BOOL_CONFIG_VALUE_COUNT
  };
 
 diff --git a/src/server/worldserver/worldserver.conf.dist b/src/server/worldserver/worldserver.conf.dist
-index a8c0d91..ab1a1ef 100644
+index fae38bd..eb163a2 100644
 --- a/src/server/worldserver/worldserver.conf.dist
 +++ b/src/server/worldserver/worldserver.conf.dist
-@@ -2784,4 +2784,27 @@ PlayerDump.DisallowPaths = 1
+@@ -2801,4 +2801,27 @@ PlayerDump.DisallowPaths = 1
  PlayerDump.DisallowOverwrite = 1
 
  #
