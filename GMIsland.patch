@@ -99,13 +99,13 @@ index 354b36b..4591f73 100755
  }
 
 diff --git a/src/server/game/World/World.h b/src/server/game/World/World.h
-index 18d3200..d61b3c3 100755
+index be4c412..be4692f 100755
 --- a/src/server/game/World/World.h
 +++ b/src/server/game/World/World.h
-@@ -162,6 +162,8 @@ enum WorldBoolConfigs
-     CONFIG_PDUMP_NO_OVERWRITE,
+@@ -163,6 +163,8 @@ enum WorldBoolConfigs
      CONFIG_QUEST_IGNORE_AUTO_ACCEPT,
      CONFIG_QUEST_IGNORE_AUTO_COMPLETE,
+     CONFIG_WARDEN_ENABLED,
 +    CONFIG_GMISLAND_PLAYERS_NOACCESS_ENABLE,
 +    CONFIG_GMISLAND_BAN_ENABLE,
      BOOL_CONFIG_VALUE_COUNT
